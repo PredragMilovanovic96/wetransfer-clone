@@ -40,7 +40,7 @@ async def upload_file(request: Request, file: UploadFile = File(...), email: str
     with open(META_FILE, 'w') as f:
         json.dump(files, f)
 
-    forwarded_host = request.headers.get("x-forwarded-host")
+    forwarded_host = request.headers.get("x-forwarded-host") or request.headers.get("host")
     proto = request.headers.get("x-forwarded-proto", "http")
     host = forwarded_host or request.client.host
     full_link = f"{proto}://{host}/f/{short_id}"
