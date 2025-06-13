@@ -31,7 +31,7 @@ def generate_short_id(length=6):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 @app.post("/upload", response_class=HTMLResponse)
-async def upload_file(file: UploadFile = File(...), email: str = Form(...)):
+async def upload_file(request: Request, file: UploadFile = File(...), email: str = Form(...)):
     short_id = generate_short_id()
     file_path = os.path.join(UPLOAD_DIR, short_id + "_" + file.filename)
     with open(file_path, "wb") as buffer:
@@ -39,7 +39,12 @@ async def upload_file(file: UploadFile = File(...), email: str = Form(...)):
     files[short_id] = {"filename": file.filename, "email": email}
     with open(META_FILE, 'w') as f:
         json.dump(files, f)
-    full_link = f"http://127.0.0.1:8000/f/{short_id}"
+
+    forwarded_host = request.headers.get("x-forwarded-host")
+    proto = request.headers.get("x-forwarded-proto", "http")
+    host = forwarded_host or request.client.host
+    full_link = f"{proto}://{host}/f/{short_id}"
+
     return (
         "<html>"
         "<head>"
